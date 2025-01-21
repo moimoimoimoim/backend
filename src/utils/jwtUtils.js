@@ -2,15 +2,24 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 const generateToken = (payload) => {
+  // jwtUtils.js
+  const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+
   if (!JWT_SECRET_KEY) {
     throw new Error("JWT_SECRET_KEY is not defined");
   }
+
   const token = jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: "1h" });
   return token;
 };
 
 const refreshToken = (token) => {
   try {
+    console.log(
+      "JWT_SECRET_KEY inside refreshToken:",
+      process.env.JWT_SECRET_KEY
+    );
+
     if (!JWT_SECRET_KEY) {
       throw new Error("JWT_SECRET_KEY is not defined");
     }
