@@ -1,0 +1,40 @@
+{
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "mongoose-sequence": "^6.0.1"
+  },
+  "name": "moim-backend",
+  "description": "moim의 백엔드 ",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/day024/moim-backend.git"
+  },
+  "keywords": [
+    "moim",
+    "backend",
+    "Node.js",
+    "Express",
+    "REST",
+    "API",
+    "MongoDB",
+    "모임",
+    "서버"
+  ],
+  "author": "moim",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/day024/moim-backend/issues"
+  },
+  "homepage": "https://github.com/day024/moim-backend#readme"
+}
