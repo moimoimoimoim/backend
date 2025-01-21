@@ -1,0 +1,34 @@
+# IDE 및 에디터 설정
+.vscode/
+.idea/
+
+# 운영체제 생성 파일들
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 임시 파일들
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# npm 글로벌 캐시
+.npm/
+
+# 로그 파일들
+*.log.*
+
+# JetBrains IDE의 로컬 히스토리
+.idea/
+
+# 빌드 및 배포 파일들
+.next/
+.nuxt/
+dist/
+build/
+
+# 기타 필요 없는 파일들
+*.tgz
+
+.env
