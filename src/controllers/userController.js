@@ -67,6 +67,15 @@ class UserController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  async getMyPage(req, res) {
+    try {
+      await userService.getMyPage(req, res);
+    } catch (err) {
+      console.error("회원정보 조회 중 에러 발생:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }
 
 module.exports = new UserController();
