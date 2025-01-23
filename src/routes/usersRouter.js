@@ -1,6 +1,7 @@
 //usersRouter.js
 const express = require("express");
 const userController = require("../controllers/userController");
+const authenticateToken = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -18,5 +19,8 @@ router.post("/logout", userController.logout);
 
 // 회원정보 수정
 router.put("/update", userController.update);
+
+//마이페이지 (내정보조회)
+router.get("/my-page", authenticateToken, userController.getMyPage);
 
 module.exports = router;

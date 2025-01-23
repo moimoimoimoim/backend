@@ -97,6 +97,31 @@ class UserService {
     const user = await User.findOne({ email });
     return user;
   }
+
+  async getMyPage(req, res) {
+    try {
+      if (!req.user) {
+        throw new Error("인증되지 않은 사용자입니다.");
+      }
+
+      const { email } = req.user;
+      const user = await this.findUserByEmail(email);
+
+      if (!user) {
+        throw new Error("사용자를 찾을 수 없습니다.");
+      }
+
+      const { password, ...userInfo } = user.toObject();
+
+      res.status(200).json({
+        message: "회원정보 조회 성공",
+        user: userInfo,
+      });
+    } catch (error) {
+      console.error("회원정보 조회 중 에러 발생:", error);
+      res.status(500).json({ message: "서버 오류", error: error.message });
+    }
+  }
 }
 
 module.exports = new UserService();
