@@ -1,3 +1,4 @@
+//userService.js
 const User = require("../schemas/users");
 const bcrypt = require("bcryptjs");
 const { generateToken } = require("../utils/jwtUtils");
@@ -90,6 +91,11 @@ class UserService {
 
     user.lastModifiedDate = new Date();
     await user.save();
+  }
+
+  async findUserByEmail(email) {
+    const user = await User.findOne({ email });
+    return user;
   }
 }
 
