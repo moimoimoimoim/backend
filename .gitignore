@@ -33,3 +33,6 @@ build/
 
 # 민감한 파일 
 .env
+
+# 패키지 파일
+node_modules/
