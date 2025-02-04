@@ -245,6 +245,72 @@ const getMeetingSchedules = async (meetingId) => {
   return await Schedule.find({ _id: { $in: meetingId } });
 };
 
+async function confirmScheduleController(req, res) {
+  const { inviteToken, start, end, date } = req.body;
+
+  // 필수 항목 검사
+  if (!inviteToken || !start || !end || !date) {
+    return res.status(400).json({ message: "필수 항목이 누락되었습니다." });
+  }
+
+  try {
+    // 일정에 대한 정보 확인
+    const meeting = await Meeting.findOne({ invite_token: inviteToken });
+    if (!meeting) {
+      return res.status(404).json({ message: "회의를 찾을 수 없습니다." });
+    }
+
+    // 확정된 일정 저장
+    meeting.confirmed_schedule = { start, end, date };
+    await meeting.save();
+
+    return res.status(200).json({
+      message: "일정이 확정되었습니다.",
+      confirmed_schedule: meeting.confirmed_schedule,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+}
+
+const confirmSchedule = async (inviteToken, start, end) => {
+  if (!inviteToken || !start) {
+    throw new Error("필수 항목이 누락되었습니다.");
+  }
+
+  const meeting = await Meeting.findOne({ invite_token: inviteToken });
+
+  if (!meeting) {
+    throw new Error("회의를 찾을 수 없습니다.");
+  }
+
+  // 확정된 일정 저장
+  meeting.confirmed_schedule = { start, end };
+  await meeting.save();
+
+  return meeting.confirmed_schedule;
+};
+
+const getConfirmedSchedule = async (inviteToken) => {
+  try {
+    // Find the meeting based on the invite token
+    const meeting = await Meeting.findOne({ invite_token: inviteToken });
+
+    if (!meeting) {
+      throw new Error("회의를 찾을 수 없습니다.");
+    }
+
+    // Check if the confirmed schedule exists
+    if (!meeting.confirmed_schedule) {
+      throw new Error("확정된 일정이 없습니다.");
+    }
+
+    return meeting.confirmed_schedule;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 module.exports = {
   joinMeetingService,
   generateInvite,
@@ -254,4 +320,6 @@ module.exports = {
   getMeetingCount,
   getMeetingSchedules,
   filterTimeSlots,
+  confirmSchedule,
+  getConfirmedSchedule,
 };

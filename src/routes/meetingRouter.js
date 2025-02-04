@@ -42,4 +42,15 @@ router.get(
 
 router.post("/filter-timeslots", slotController.filterTimeSlotsController);
 
+router.post(
+  "/confirm-schedule",
+  authenticateJWT,
+  meetingController.confirmScheduleController
+);
+
+router.get(
+  "/confirm-schedule/:inviteToken",
+  meetingController.getConfirmedScheduleController
+);
+
 module.exports = router;

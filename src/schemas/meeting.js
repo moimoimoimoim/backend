@@ -26,7 +26,13 @@ const meetingSchema = new Schema({
   expires_at: { type: Date, required: true },
   meeting_schedule: [{ type: Schema.Types.ObjectId, ref: "Schedule" }],
   member_total: { type: Number, default: 0 },
-  confirmed_schedule: { type: Object, required: false }, // 확정된 시간표 저장
+  confirmed_schedule: {
+    type: {
+      start: { type: Number },
+      end: { type: Number },
+    },
+    required: false,
+  }, // 확정된 시간표 저장
 });
 
 const Meeting = mongoose.model("Meeting", meetingSchema);
