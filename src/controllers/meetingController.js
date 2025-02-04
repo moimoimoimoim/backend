@@ -1,3 +1,5 @@
+//controllers/meetingController.js
+
 const meetingService = require("../services/meetingService");
 
 const getMeetingByInviteTokenController = async (req, res) => {
@@ -22,6 +24,7 @@ const getMeetingByInviteTokenController = async (req, res) => {
 
 const getMeetingSchedulesController = async (req, res) => {
   try {
+    const { meetingId } = req.params;
     const schedules = await meetingService.getMeetingSchedules(meetingId);
 
     if (!schedules || schedules.length === 0) {
@@ -38,46 +41,44 @@ const getMeetingSchedulesController = async (req, res) => {
 };
 
 const generateInviteController = async (req, res) => {
-  const {
-    meeting_name,
-    meeting_code,
-    meetingDay,
-    meetingTime,
-    meetingRole,
-    meetingGroup,
-  } = req.body;
-
-  console.log("User Info:", req.user); // req.user의 전체 정보 출력
-
-  // req.user가 없거나, email이 없으면 에러 처리
-  if (!req.user || !req.user.email) {
-    return res.status(400).json({ message: "User info missing or invalid." });
-  }
-
-  const user_email = req.user.email;
-  const userId = req.user.userId;
-  // 필수 필드 체크
-  if (!meeting_name || !meeting_code || !user_email) {
-    return res
-      .status(400)
-      .json({ message: "meeting_name, email, and meeting_code are required." });
-  }
-
   try {
-    const result = await meetingService.generateInvite(
+    const {
       meeting_name,
       meeting_code,
-      meetingDay,
-      meetingTime,
+      timeslots,
       meetingRole,
       meetingGroup,
-      user_email,
-      req // 전체 req 객체 전달
+      user_id,
+    } = req.body;
+
+    if (!timeslots || timeslots.length === 0) {
+      return res.status(400).json({ error: "회의시간(slot)이 필수입니다." });
+    }
+
+    const meeting = await meetingService.generateInvite(
+      meeting_name,
+      meeting_code,
+      timeslots,
+      meetingRole,
+      meetingGroup,
+      user_id
     );
+
+    return res.status(201).json({ message: "회의 초대 생성 성공", meeting });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+const deleteMeetingController = async (req, res) => {
+  try {
+    const { meetingId } = req.params;
+    const result = await meetingService.deleteMeeting(meetingId);
+
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error creating meeting:", error);
-    return res.status(500).json({ message: error.message });
+    console.error("Error deleting meeting:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -85,4 +86,5 @@ module.exports = {
   getMeetingByInviteTokenController,
   getMeetingSchedulesController,
   generateInviteController,
+  deleteMeetingController,
 };

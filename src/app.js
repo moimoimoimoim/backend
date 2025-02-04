@@ -6,6 +6,8 @@ const mongoose = require("mongoose");
 const meetingRouter = require("./routes/meetingRouter");
 const usersRouter = require("./routes/usersRouter");
 const oauthRouter = require("./routes/oauthRouter");
+const scheduleRouter = require("./routes/scheduleRouter");
+const loginRequired = require("./utils/login-required");
 const cookieParser = require("cookie-parser");
 
 const submoduleDir = path.resolve(__dirname, "../submodule");
@@ -24,6 +26,7 @@ fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
 
     app.use("/", meetingRouter);
     app.use("/users", usersRouter);
+    app.use("/schedules", loginRequired, scheduleRouter);
     app.use("/", oauthRouter);
 
     const MONGO_DB_URL =
