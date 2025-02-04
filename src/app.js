@@ -6,6 +6,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const usersRouter = require("./routes/usersRouter");
 const oauthRouter = require("./routes/oauthRouter");
+const scheduleRouter = require("./routes/scheduleRouter");
+const loginRequired = require("./utils/login-required");
 const cookieParser = require("cookie-parser");
 
 // 서브모듈 경로
@@ -24,6 +26,7 @@ fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
     app.use(express.urlencoded({ extended: true }));
 
     app.use("/users", usersRouter);
+    app.use("/schedules", loginRequired, scheduleRouter);
     app.use("/", oauthRouter);
 
     const MONGO_DB_URL =

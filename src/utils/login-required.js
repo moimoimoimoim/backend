@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 function loginRequired(req, res, next) {
-  const userToken = req.headers["authorization"]?.split(" ")[1];
+  const userToken = req.cookies["token"];
 
   if (!userToken || userToken === "null") {
     console.log(
@@ -20,8 +20,8 @@ function loginRequired(req, res, next) {
     const secretKey = process.env.JWT_SECRET_KEY || "secret-key";
     const jwtDecoded = jwt.verify(userToken, secretKey);
 
-    const userId = jwtDecoded.userId;
-    req.currentUserId = userId;
+    const email = jwtDecoded.email;
+    req.currentUserEmail = email;
 
     next();
   } catch (error) {
