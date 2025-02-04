@@ -1,17 +1,16 @@
-//authMiddlewars.js
 const jwt = require("jsonwebtoken");
-const authenticateToken = (req, res, next) => {
-  const token = req.cookies.token;
+
+// Authorization 헤더에서 Bearer 토큰을 사용하는 방식
+const authenticateJWT = (req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
+    return res.status(401).json({ message: "Access denied. Token missing" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    req.user = decoded;
+    req.user = decoded; // JWT payload을 req.user로 저장
     next();
   } catch (error) {
     console.error("Token validation error:", error);
@@ -19,4 +18,4 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-module.exports = authenticateToken;
+module.exports = { authenticateJWT };

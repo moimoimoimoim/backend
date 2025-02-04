@@ -1,30 +1,25 @@
-// const timeslots = [];
+const mongoose = require("mongoose");
+const Meeting = require("../schemas/meeting");
+const Schedule = require("../schemas/schedules");
+const crypto = require("crypto");
 
+// timeslots 업데이트 함수
 function updateTimeslots(nickname, respondedSlots) {
   respondedSlots.forEach((slot) => {
-    // 기존 timeslots에 slot이 존재하는지 확인
     let existingSlot = timeslots.find((t) => t.slot === slot);
 
     if (existingSlot) {
-      // slot이 존재하면 members 배열에 nickname 추가
       if (!existingSlot.members.includes(nickname)) {
         existingSlot.members.push(nickname);
       }
     } else {
-      // slot이 존재하지 않으면 새로 추가
       timeslots.push({ slot, members: [nickname] });
     }
   });
 
-  // slot 기준 정렬 (순서 유지)
+  // slot 기준 정렬
   timeslots.sort((a, b) => a.slot - b.slot);
 }
-
-// 테스트 실행
-// updateTimeslots("user1", [46, 47, 48, 49, 50, 51]); // 월 23:00 ~ 화 02:00
-// updateTimeslots("user2", [46, 47, 150, 151, 152, 153]); // 월 23:00 ~ 화 00:00, 목 03:00 ~ 05:00
-
-// console.log(JSON.stringify(timeslots, null, 2));
 
 const timeslots = [
   { slot: 46, members: ["user1", "user2"] },
@@ -39,14 +34,13 @@ const timeslots = [
   { slot: 153, members: ["user2"] },
 ];
 
+// timeslots 필터링 함수
 function filterTimeSlots(minDuration, minMembers) {
-  // 최소 인원 필터 적용
   let minMembersSlots = timeslots.filter((t) => t.members.length >= minMembers);
 
   if (minMembersSlots.length === 0) return [];
   minMembersSlots.sort((a, b) => a.slot - b.slot);
 
-  // 연속된 slot 병합 및 최소 시간 필터 적용
   let resultSlots = [];
   let tmp = [minMembersSlots[0]];
 
@@ -57,7 +51,6 @@ function filterTimeSlots(minDuration, minMembers) {
       if (tmp.length >= minDuration / 30) {
         resultSlots.push({ start: tmp[0].slot, end: tmp[tmp.length - 1].slot });
       }
-
       tmp = [minMembersSlots[i]];
     }
   }
@@ -69,6 +62,196 @@ function filterTimeSlots(minDuration, minMembers) {
   return resultSlots;
 }
 
-console.log("최소 인원 2명:", filterTimeSlots(0, 2)); // 최소 인원 2명
-console.log("최소 시간 60분:", filterTimeSlots(60, 0)); // 최소 60분 이상 지속
-console.log("최소 인원 2명 & 최소 시간 60분:", filterTimeSlots(60, 2)); // 둘 다 적용
+console.log("최소 인원 2명:", filterTimeSlots(0, 2));
+console.log("최소 시간 60분:", filterTimeSlots(60, 0));
+console.log("최소 인원 2명 & 최소 시간 60분:", filterTimeSlots(60, 2));
+
+// 초대 토큰 생성
+const generateInviteToken = async () => {
+  let inviteToken;
+  let existingMeeting;
+
+  do {
+    inviteToken = crypto.randomBytes(20).toString("hex");
+    existingMeeting = await Meeting.findOne({ invite_token: inviteToken });
+
+    if (!inviteToken) {
+      throw new Error("inviteToken이 null입니다. 다시 생성해 주세요.");
+    }
+  } while (existingMeeting);
+
+  return inviteToken; // 여기에서 await을 기다리고 반환
+};
+
+// 회의 참여하기
+const joinMeetingService = async (
+  inviteToken,
+  participantCode,
+  nickname,
+  availableTimes,
+  session
+) => {
+  // 초대 링크로 회의 찾기
+  const meeting = await Meeting.findOne({ invite_token: inviteToken });
+
+  if (!meeting) {
+    throw new Error("유효하지 않은 초대 링크입니다.");
+  }
+
+  if (participantCode !== meeting.meeting_code) {
+    throw new Error("참여 코드가 일치하지 않습니다.");
+  }
+
+  const userId = (session && session.userId) || null;
+  const userNickname = nickname || (session && session.nickname) || "비회원";
+
+  // 사용자의 스케줄 데이터 생성
+  const scheduleData = {
+    scheduleName: `${userNickname}'s Schedule`, // 사용자의 스케줄 이름
+    timeslots: availableTimes.map((slot) => ({ slot })), // 사용자가 선택한 시간대
+  };
+
+  if (userId) {
+    scheduleData.userId = userId;
+  }
+
+  const schedule = new Schedule(scheduleData); // 새로운 스케줄 생성
+  await schedule.save(); // 스케줄 DB에 저장
+
+  // 회의에 생성된 스케줄 추가
+  meeting.meeting_schedule.push(schedule._id);
+  meeting.member_total += 1; // 참여자 수 증가
+  await meeting.save(); // 회의 DB에 저장
+
+  return { message: "모임 참여 완료", availableTimes }; // 완료 메시지 반환
+};
+
+// 회의 초대 링크 생성
+const generateInvite = async (
+  meeting_name,
+  meeting_code,
+  timeslots,
+  meetingRole = "HOST",
+  meetingGroup,
+  user_id
+) => {
+  if (!timeslots || timeslots.length === 0) {
+    throw new Error("회의시간(slot)이 필수입니다.");
+  }
+
+  // 초대 토큰 생성
+  const invite_token = await generateInviteToken(); // 초대 토큰 생성 시 await 추가
+  const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000); // 예시로 24시간 후 만료 설정
+
+  // 사용자의 스케줄 데이터 생성 (회의 생성 시 스케쥴 DB에 사용자의 `slot` 추가)
+  const scheduleData = {
+    scheduleName: `${user_id}'s Schedule`, // 사용자의 이름을 스케쥴 이름으로 설정
+    timeslots: timeslots.map((slot) => ({ slot })), // 선택한 시간대
+  };
+
+  if (user_id) {
+    scheduleData.userId = user_id;
+  }
+
+  const schedule = new Schedule(scheduleData); // 새로운 스케쥴 생성
+  await schedule.save(); // 스케쥴 DB에 저장
+
+  // meeting 생성
+  const newMeeting = new Meeting({
+    meeting_name,
+    meeting_code,
+    timeslots: timeslots.map((slot) => ({ slot })), // 참여 가능한 시간대 정보
+    meeting_role: meetingRole,
+    meeting_group: meetingGroup,
+    invite_token,
+    expires_at,
+    meeting_schedule: [schedule._id], // 새로 생성한 스케쥴을 회의에 추가
+    member_total: 1, // 처음에 1명 (주최자)
+    confirmed_schedule: {},
+  });
+
+  try {
+    await newMeeting.save(); // 회의 DB에 저장
+    return {
+      message: "회의 초대 링크 생성 완료",
+      invite_link: `/join/${invite_token}`,
+    }; // 초대 링크 반환
+  } catch (err) {
+    console.error("회의 생성 오류: ", err);
+    throw new Error("회의 초대 생성에 실패했습니다.");
+  }
+};
+
+// 모임 삭제
+const deleteMeeting = async (meetingId) => {
+  const meeting = await Meeting.findById(meetingId);
+
+  if (!meeting) {
+    throw new Error("해당 모임을 찾을 수 없습니다.");
+  }
+
+  await Meeting.findByIdAndDelete(meetingId);
+  return { message: "모임이 삭제되었습니다." };
+};
+
+// 초대 토큰을 통해 모임 조회
+const getMeetingByInviteToken = async (inviteToken) => {
+  return await Meeting.findOne({ invite_token: inviteToken }).populate(
+    "meeting_schedule"
+  );
+};
+
+//참여자 목록 조회
+async function getParticipants(meetingId) {
+  try {
+    // meetingId로 모임 데이터 조회 (populate로 schedule 정보를 함께 가져오기)
+    const meeting = await Meeting.findById(meetingId).populate(
+      "meeting_schedule"
+    ); // meeting_schedule ObjectId로 실제 데이터를 가져옴
+
+    if (!meeting) {
+      throw new Error("해당 모임을 찾을 수 없습니다.");
+    }
+
+    if (!meeting.meeting_schedule || meeting.meeting_schedule.length === 0) {
+      throw new Error("해당 모임의 스케줄이 존재하지 않습니다.");
+    }
+
+    const nicknames = meeting.meeting_schedule.map((schedule) => {
+      const nickname = schedule.scheduleName.replace("'s Schedule", "");
+      console.log(`각 스케줄의 scheduleName: ${nickname}`);
+      return nickname;
+    });
+
+    return nicknames;
+  } catch (error) {
+    console.error("닉네임 조회 중 오류 발생:", error.message);
+    throw new Error(error.message || "참여자 닉네임 조회에 실패했습니다.");
+  }
+}
+
+//모임참여자 수
+const getMeetingCount = async (inviteToken) => {
+  const meeting = await Meeting.findOne({ invite_token: inviteToken });
+
+  if (!meeting) {
+    throw new Error("회의를 찾을 수 없습니다.");
+  }
+
+  return meeting.member_total; // 참여자 수 반환
+};
+
+const getMeetingSchedules = async (meetingId) => {
+  return await Schedule.find({ _id: { $in: meetingId } });
+};
+
+module.exports = {
+  joinMeetingService,
+  generateInvite,
+  getMeetingByInviteToken,
+  deleteMeeting,
+  getParticipants,
+  getMeetingCount,
+  getMeetingSchedules,
+  filterTimeSlots,
+};

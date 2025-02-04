@@ -1,8 +1,8 @@
+// utils/jwtUtils.js
 const jwt = require("jsonwebtoken");
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 const generateToken = (payload) => {
-  // jwtUtils.js
   const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
   if (!JWT_SECRET_KEY) {

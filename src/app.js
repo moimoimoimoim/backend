@@ -1,16 +1,15 @@
-//app.js
 const dotenv = require("dotenv");
 const fs = require("fs-extra");
 const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose");
+const meetingRouter = require("./routes/meetingRouter");
 const usersRouter = require("./routes/usersRouter");
 const oauthRouter = require("./routes/oauthRouter");
 const scheduleRouter = require("./routes/scheduleRouter");
 const loginRequired = require("./utils/login-required");
 const cookieParser = require("cookie-parser");
 
-// 서브모듈 경로
 const submoduleDir = path.resolve(__dirname, "../submodule");
 const destinationDir = path.resolve(__dirname);
 
@@ -25,6 +24,7 @@ fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
+    app.use("/", meetingRouter);
     app.use("/users", usersRouter);
     app.use("/schedules", loginRequired, scheduleRouter);
     app.use("/", oauthRouter);
@@ -34,7 +34,6 @@ fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
     const MONGO_DB_NAME = process.env.MONGO_DB_NAME || "mongoMoim";
     const EXPRESS_PORT = process.env.EXPRESS_PORT || 8080;
 
-    // MongoDB 연결
     mongoose
       .connect(MONGO_DB_URL, {
         dbName: MONGO_DB_NAME,
@@ -46,7 +45,6 @@ fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
         console.error(`MongoDB Connection Error: ${error}`);
       });
 
-    // 서버 시작
     app.listen(EXPRESS_PORT, () => {
       console.log(`Server Started... Port: ${EXPRESS_PORT}`);
     });
