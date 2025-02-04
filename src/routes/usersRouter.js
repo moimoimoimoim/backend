@@ -1,7 +1,7 @@
 //usersRouter.js
 const express = require("express");
 const userController = require("../controllers/userController");
-const authenticateToken = require("../middlewares/authMiddleware");
+const { authenticateJWT } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -21,6 +21,6 @@ router.post("/logout", userController.logout);
 router.put("/update", userController.update);
 
 //마이페이지 (내정보조회)
-router.get("/my-page", authenticateToken, userController.getMyPage);
+router.get("/my-page", authenticateJWT, userController.getMyPage);
 
 module.exports = router;

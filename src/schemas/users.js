@@ -3,7 +3,7 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 // User 스키마 정의
 const userSchema = new mongoose.Schema({
-  userId: { type: Number, unique: true }, // userId를 숫자로 설정
+  userId: { type: Number, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   nickname: { type: String, required: true },
