@@ -82,9 +82,50 @@ const deleteMeetingController = async (req, res) => {
   }
 };
 
+async function confirmScheduleController(req, res) {
+  const { inviteToken, start, end } = req.body;
+
+  try {
+    // Call the service to handle the schedule confirmation
+    const confirmedSchedule = await meetingService.confirmSchedule(
+      inviteToken,
+      start,
+      end
+    );
+
+    return res.status(200).json({
+      message: "일정이 확정되었습니다.",
+      confirmed_schedule: confirmedSchedule,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error.message });
+  }
+}
+
+const getConfirmedScheduleController = async (req, res) => {
+  const { inviteToken } = req.params;
+
+  try {
+    const confirmedSchedule = await meetingService.getConfirmedSchedule(
+      inviteToken
+    );
+
+    return res.status(200).json({
+      message: "확정된 일정 조회 성공",
+      confirmed_schedule: confirmedSchedule,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getMeetingByInviteTokenController,
   getMeetingSchedulesController,
   generateInviteController,
   deleteMeetingController,
+  confirmScheduleController,
+  getConfirmedScheduleController,
 };
