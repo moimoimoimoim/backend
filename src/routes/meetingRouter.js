@@ -6,19 +6,32 @@ const joinController = require("../controllers/joinController");
 const slotController = require("../controllers/slotController");
 const { authenticateJWT } = require("../middlewares/authMiddleware");
 
-router.post(
-  "/create",
-  authenticateJWT,
-  meetingController.generateInviteController
-);
-router.post("/join/:inviteToken", joinController.joinController);
+app.post("/create", authMiddleware, async (req, res) => {
+  // ✅ 인증 미들웨어가 적용됨
+  const { meeting_name, meeting_code, timeslots, meeting_role } = req.body;
 
+  if (!meeting_name || !meeting_code) {
+    return res.status(400).json({ error: "모임 정보가 부족합니다." });
+  }
+
+  res.status(201).json({ message: "✅ 모임 생성 완료!" });
+});
+
+// router.post(
+//   "/create", // create
+//   authenticateJWT,
+//   meetingController.generateInviteController
+// );
+router.post("/join/:inviteToken", joinController.joinController);
+router.post("/create", (req, res) => {
+  res.status(200).json({ message: "✅ 일정 생성 완료!" });
+});
 router.get(
   "/join/:inviteToken",
   meetingController.getMeetingByInviteTokenController
 );
 router.get(
-  "/schedules/:meetingId",
+  "/schedule/:meetingId",
   meetingController.getMeetingSchedulesController
 );
 
@@ -52,5 +65,9 @@ router.get(
   "/confirm-schedule/:inviteToken",
   meetingController.getConfirmedScheduleController
 );
+
+router.get("/meetings", (req, res) => {
+  res.json({ meetings: [] });
+});
 
 module.exports = router;

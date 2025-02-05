@@ -16,7 +16,7 @@ const meetingSchema = new Schema({
     enum: ["HOST", "PARTICIPANT"],
     default: "HOST",
   },
-  meeting_group: { type: String, required: false },
+  group: { type: String, required: false },
   meeting_link: { type: String, required: false },
   invite_token: {
     type: String,

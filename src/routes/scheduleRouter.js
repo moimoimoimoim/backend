@@ -22,7 +22,7 @@ router.get("/:scheduleId", async (req, res) => {
 // 스케줄 생성
 router.post("/", async (req, res) => {
   const { userId, scheduleName, timeslots } = req.body;
-  const result = await scheduleService.createSchedule(
+  const result = await scheduleService.createchedule(
     userId,
     scheduleName,
     timeslots

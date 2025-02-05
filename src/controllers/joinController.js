@@ -46,9 +46,9 @@ const getMeetingCountController = async (req, res) => {
   const { inviteToken } = req.params;
 
   try {
-    const participantCount = await meetingService.getMeetingCount(inviteToken);
+    const participant_count = await meetingService.getMeetingCount(inviteToken);
 
-    return res.status(200).json({ success: true, participantCount });
+    return res.status(200).json({ success: true, participant_count });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }

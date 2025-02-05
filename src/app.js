@@ -12,6 +12,7 @@ const cookieParser = require("cookie-parser");
 
 const submoduleDir = path.resolve(__dirname, "../submodule");
 const destinationDir = path.resolve(__dirname);
+const cors = require("cors"); // ✅ CORS 모듈 추가
 
 // .env 파일 복사 및 설정
 fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
@@ -19,6 +20,13 @@ fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
     dotenv.config({ path: path.join(destinationDir, ".env") });
 
     const app = express();
+    // ✅ CORS 허용 (모든 요청 허용 또는 특정 출처만 허용)
+    app.use(
+      cors({
+        origin: "http://localhost:5173", // 프론트엔드 주소
+        credentials: true, // 쿠키 등 인증 관련 정보 포함 가능
+      })
+    );
 
     app.use(cookieParser());
     app.use(express.json());
@@ -26,7 +34,7 @@ fs.copy(path.join(submoduleDir, ".env"), path.join(destinationDir, ".env"))
 
     app.use("/", meetingRouter);
     app.use("/users", usersRouter);
-    app.use("/schedules", loginRequired, scheduleRouter);
+    app.use("/schedule", loginRequired, scheduleRouter);
     app.use("/", oauthRouter);
 
     const MONGO_DB_URL =

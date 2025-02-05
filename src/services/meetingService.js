@@ -162,7 +162,7 @@ const generateInvite = async (
     meeting_code,
     timeslots: timeslots.map((slot) => ({ slot })), // 참여 가능한 시간대 정보
     meeting_role: meetingRole,
-    meeting_group: meetingGroup,
+    group: meetingGroup,
     invite_token,
     expires_at,
     meeting_schedule: [schedule._id], // 새로 생성한 스케쥴을 회의에 추가

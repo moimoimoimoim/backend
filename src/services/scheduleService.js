@@ -39,7 +39,7 @@ async function getSchedule(scheduleId) {
  * @param {Array} timeslots - 스케줄 슬롯 배열 [{ slot: Number }]
  */
 
-async function createSchedule(userId, scheduleName, timeslots) {
+async function createchedule(userId, scheduleName, timeslots) {
   try {
     const newSchedule = new Schedule({
       userId,
@@ -99,7 +99,7 @@ async function deleteSchedule(scheduleId) {
 module.exports = {
   getSchedulesByUserEmail,
   getSchedule,
-  createSchedule,
+  createchedule,
   updateSchedule,
   deleteSchedule,
 };
