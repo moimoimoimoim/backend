@@ -1,5 +1,6 @@
 //oauthController.js
 const oauthService = require("../services/oauthService");
+const userService = require("../services/userService");
 
 class OAuthController {
   async startGoogleOAuth(req, res) {
@@ -22,13 +23,11 @@ class OAuthController {
     try {
       const userData = await oauthService.processGoogleCallback(code);
 
-      if (userData.isNewUser) {
-        return res.redirect(
-          `${process.env.GOOGLE_SIGNUP_REDIRECT_URI}?email=${userData.email}&name=${userData.name}`
-        );
-      }
-
-      res.cookie("token", userData.token, { httpOnly: true, maxAge: 3600000 });
+      res.cookie("token", userData.token, {
+        maxAge: 3600000,
+        sameSite: "None",
+        secure: true,
+      });
       return res
         .status(200)
         .json({ message: "로그인 성공", user: userData.user });
@@ -39,14 +38,14 @@ class OAuthController {
   }
 
   async signup(req, res) {
-    const { email, name, password } = req.body;
+    const { email, name } = req.user;
 
-    if (!email || !name || !password) {
+    if (!email || !name) {
       return res.status(400).json({ message: "필수 데이터가 누락되었습니다." });
     }
 
     try {
-      const newUser = await userService.createUser({ email, name, password });
+      const newUser = await userService.createUser({ email, name });
       return res.status(201).json({ message: "회원가입 성공", user: newUser });
     } catch (error) {
       console.error("회원가입 중 오류:", error);

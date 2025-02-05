@@ -4,11 +4,9 @@ const scheduleService = require("../services/scheduleService");
 
 // 로그인된 사용자의 모든 스케줄 조회
 router.get("/", async (req, res) => {
-  const { currentUserEmail } = req;
+  const { email } = req.user;
 
-  const result = await scheduleService.getSchedulesByUserEmail(
-    currentUserEmail
-  );
+  const result = await scheduleService.getSchedulesByUserEmail(email);
   res.json(result);
 });
 

@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 // Authorization 헤더에서 Bearer 토큰을 사용하는 방식
 const authenticateJWT = (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+  const token = req.cookies["token"];
 
   if (!token) {
     return res.status(401).json({ message: "Access denied. Token missing" });

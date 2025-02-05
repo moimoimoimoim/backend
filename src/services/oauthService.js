@@ -26,13 +26,10 @@ class OAuthService {
     } = process.env;
 
     try {
-      const tokenResponse = await axios.post(GOOGLE_TOKEN_URL, {
-        code,
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
-        redirect_uri: GOOGLE_REDIRECT_URI,
-        grant_type: "authorization_code",
-      });
+      const tokenResponse = await axios.post(
+        GOOGLE_TOKEN_URL +
+          `?code=${code}&client_id=${GOOGLE_CLIENT_ID}&client_secret=${GOOGLE_CLIENT_SECRET}&redirect_uri=${GOOGLE_REDIRECT_URI}&grant_type=authorization_code`
+      );
 
       const { access_token } = tokenResponse.data;
 
@@ -49,13 +46,21 @@ class OAuthService {
       const user = await userService.findUserByEmail(email);
 
       if (user) {
-        const payload = { email: user.email, isAdmin: user.isAdmin };
+        const payload = { email: user.email };
         const token = generateToken(payload);
 
-        return { user, token, isNewUser: false };
+        return { user, token };
       }
 
-      return { email, name, isNewUser: true };
+      const newUser = await userService.createUser({
+        email,
+        nickname: name,
+        agreedTerms: true,
+      });
+      const payload = { email: newUser.email };
+      const token = generateToken(payload);
+
+      return { user: newUser, token };
     } catch (error) {
       console.error("Error processing Google callback:", error);
       throw error;
