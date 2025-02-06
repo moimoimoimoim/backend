@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const scheduleService = require("../services/scheduleService");
+const { authenticateJWT } = require("../middlewares/authMiddleware");
 
 // 단일 스케줄 조회
 router.get("/:scheduleId", async (req, res) => {
@@ -10,7 +11,7 @@ router.get("/:scheduleId", async (req, res) => {
 });
 
 // 로그인된 사용자의 모든 스케줄 조회
-router.get("/", async (req, res) => {
+router.get("/", authenticateJWT, async (req, res) => {
   const { email } = req.user;
 
   const result = await scheduleService.getSchedulesByUserEmail(email);

@@ -4,6 +4,7 @@ const Schedule = require("../schemas/schedules");
 const Group = require("../schemas/groups");
 const crypto = require("crypto");
 const User = require("../schemas/users");
+const jwt = require("jsonwebtoken");
 
 // timeslots 업데이트 함수
 function updateTimeslots(nickname, respondedSlots) {
@@ -87,11 +88,10 @@ const joinMeetingService = async (
   inviteToken,
   participantCode,
   nickname,
-  availableTimes,
-  session
+  token
 ) => {
   // 초대 링크로 회의 찾기
-  const meeting = await Meeting.findOne({ invite_token: inviteToken });
+  const meeting = await Meeting.findOne({ inviteToken });
 
   if (!meeting) {
     throw new Error("유효하지 않은 초대 링크입니다.");
@@ -101,28 +101,32 @@ const joinMeetingService = async (
     throw new Error("참여 코드가 일치하지 않습니다.");
   }
 
-  const userId = (session && session.userId) || null;
-  const userNickname = nickname || (session && session.nickname) || "비회원";
+  let newSchedule = null;
+  if (token) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    const foundUser = await User.findOne({ email: decoded.email });
+    if (!foundUser) throw new Error("로그인이 필요합니다.");
 
-  // 사용자의 스케줄 데이터 생성
-  const scheduleData = {
-    scheduleName: `${userNickname}'s Schedule`, // 사용자의 스케줄 이름
-    timeslots: availableTimes.map((slot) => ({ slot })), // 사용자가 선택한 시간대
-  };
-
-  if (userId) {
-    scheduleData.userId = userId;
+    newSchedule = await Schedule.create({
+      user: foundUser._id,
+      meeting: meeting._id,
+      scheduleName: `${foundUser.nickname}의 일정`,
+      timeslots: [],
+    });
+  } else {
+    newSchedule = await Schedule.create({
+      nonMemberUser: nickname,
+      meeting: meeting._id,
+      scheduleName: `${nickname}의 일정`,
+      timeslots: [],
+    });
   }
 
-  const schedule = new Schedule(scheduleData); // 새로운 스케줄 생성
-  await schedule.save(); // 스케줄 DB에 저장
-
   // 회의에 생성된 스케줄 추가
-  meeting.meeting_schedule.push(schedule._id);
-  meeting.member_total += 1; // 참여자 수 증가
+  meeting.meetingSchedules.push(newSchedule._id);
   await meeting.save(); // 회의 DB에 저장
 
-  return { message: "모임 참여 완료", availableTimes }; // 완료 메시지 반환
+  return { message: "모임 참여 완료", schedule: newSchedule }; // 완료 메시지 반환
 };
 
 // 회의 초대 링크 생성
@@ -200,9 +204,7 @@ const deleteMeeting = async (meetingId) => {
 
 // 초대 토큰을 통해 모임 조회
 const getMeetingByInviteToken = async (inviteToken) => {
-  return await Meeting.findOne({ invite_token: inviteToken }).populate(
-    "meeting_schedule"
-  );
+  return await Meeting.findOne({ inviteToken });
 };
 
 //참여자 목록 조회

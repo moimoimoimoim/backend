@@ -27,7 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/users", usersRouter);
 app.use("/groups", authenticateJWT, groupRouter);
-app.use("/schedules", authenticateJWT, scheduleRouter);
+app.use("/schedules", scheduleRouter);
 app.use("/", meetingRouter);
 app.use("/", oauthRouter);
 

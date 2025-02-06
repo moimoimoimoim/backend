@@ -1,15 +1,16 @@
 const meetingService = require("../services/meetingService");
 
 const joinController = async (req, res) => {
-  const { inviteToken, participantCode, nickname, availableTimes } = req.body;
+  const { participantCode, nickname } = req.body;
+  const { inviteToken } = req.params;
+  const token = req.cookies["token"];
 
   try {
     const result = await meetingService.joinMeetingService(
       inviteToken,
       participantCode,
       nickname,
-      availableTimes,
-      req.session // 세션 정보를 전달
+      token
     );
 
     return res.status(200).json(result);
