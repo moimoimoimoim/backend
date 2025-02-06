@@ -6,6 +6,7 @@ const Schedule = require("./schedules");
 const meetingSchema = new Schema({
   meetingName: { type: String, required: true },
   meetingCode: { type: String, required: false },
+  meetingGroup: { type: Schema.Types.ObjectId, ref: "Group" },
   meetingTimezone: [
     {
       slot: { type: Number, required: true },

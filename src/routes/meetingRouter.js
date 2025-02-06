@@ -4,7 +4,35 @@ const router = express.Router();
 const meetingController = require("../controllers/meetingController");
 const joinController = require("../controllers/joinController");
 const slotController = require("../controllers/slotController");
+const User = require("../schemas/users");
+const Schedule = require("../schemas/schedules");
 const { authenticateJWT } = require("../middlewares/authMiddleware");
+
+router.get("/", authenticateJWT, async (req, res) => {
+  try {
+    const { email } = req.user;
+
+    const foundUser = await User.findOne({ email });
+    if (!foundUser) return res.status(404).json({ message: "User not found" });
+
+    const schedules = await Schedule.find({}).populate({
+      path: "meeting",
+      populate: {
+        path: "meetingGroup",
+      },
+    });
+    const filteredSchedules = schedules.filter(
+      (schedule) => schedule.user && schedule.user._id.equals(foundUser._id)
+    );
+    const filteredMeetings = filteredSchedules.map(
+      (schedule) => schedule.meeting
+    );
+
+    return res.json(filteredMeetings);
+  } catch (e) {
+    console.error(e);
+  }
+});
 
 router.post(
   "/create",
@@ -40,7 +68,10 @@ router.get(
   joinController.getMeetingCountController
 );
 
-router.post("/filter-timeslots", slotController.filterTimeSlotsController);
+router.post(
+  "/filter-timeslots/:meetingId",
+  slotController.filterTimeSlotsController
+);
 
 router.post(
   "/confirm-schedule",

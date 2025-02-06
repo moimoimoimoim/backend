@@ -1,8 +1,10 @@
 // controllers/slotController.js
 const { filterTimeSlots } = require("../services/meetingService"); // filterTimeSlots 함수는 service 파일에서 가져옵니다.
+const Meeting = require("../schemas/meeting");
 
 async function filterTimeSlotsController(req, res) {
   const { minDuration, minMembers } = req.body;
+  const { meetingId } = req.params;
 
   // 유효성 검사
   if (typeof minDuration !== "number" || typeof minMembers !== "number") {
@@ -12,7 +14,23 @@ async function filterTimeSlotsController(req, res) {
   }
 
   try {
-    const filteredSlots = await filterTimeSlots(minDuration, minMembers);
+    const foundMeeting = await Meeting.findById(meetingId).populate(
+      "meetingSchedules"
+    );
+    const timeslots = [];
+    for (let schedule of foundMeeting.meetingSchedules) {
+      for (let slot of schedule.timeslots) {
+        const foundSlot = timeslots.find((item) => item.slot === slot.slot);
+        if (foundSlot) {
+          foundSlot["members"].push(schedule.user);
+        } else {
+          timeslots.push({ slot: slot.slot, members: [schedule.user] });
+        }
+      }
+    }
+
+    const filteredSlots = filterTimeSlots(minDuration, minMembers, timeslots);
+    console.log(filteredSlots);
 
     if (filteredSlots.length === 0) {
       return res

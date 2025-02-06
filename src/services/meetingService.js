@@ -24,21 +24,21 @@ function updateTimeslots(nickname, respondedSlots) {
   timeslots.sort((a, b) => a.slot - b.slot);
 }
 
-const timeslots = [
-  { slot: 46, members: ["user1", "user2"] },
-  { slot: 47, members: ["user1", "user2"] },
-  { slot: 48, members: ["user1"] },
-  { slot: 49, members: ["user1"] },
-  { slot: 50, members: ["user1"] },
-  { slot: 51, members: ["user1"] },
-  { slot: 150, members: ["user2"] },
-  { slot: 151, members: ["user2"] },
-  { slot: 152, members: ["user2"] },
-  { slot: 153, members: ["user2"] },
-];
+// const timeslots = [
+//   { slot: 46, members: ["user1", "user2"] },
+//   { slot: 47, members: ["user1", "user2"] },
+//   { slot: 48, members: ["user1"] },
+//   { slot: 49, members: ["user1"] },
+//   { slot: 50, members: ["user1"] },
+//   { slot: 51, members: ["user1"] },
+//   { slot: 150, members: ["user2"] },
+//   { slot: 151, members: ["user2"] },
+//   { slot: 152, members: ["user2"] },
+//   { slot: 153, members: ["user2"] },
+// ];
 
 // timeslots 필터링 함수
-function filterTimeSlots(minDuration, minMembers) {
+function filterTimeSlots(minDuration, minMembers, timeslots) {
   let minMembersSlots = timeslots.filter((t) => t.members.length >= minMembers);
 
   if (minMembersSlots.length === 0) return [];
@@ -162,6 +162,7 @@ const generateInvite = async (
     const newMeeting = await Meeting.create({
       meetingName,
       meetingCode,
+      meetingGroup,
       meetingTimezone, // 참여 가능한 시간대 정보
       inviteToken,
       memberTotal,
