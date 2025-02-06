@@ -25,10 +25,10 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/", meetingRouter);
 app.use("/users", usersRouter);
 app.use("/groups", authenticateJWT, groupRouter);
 app.use("/schedules", authenticateJWT, scheduleRouter);
+app.use("/", meetingRouter);
 app.use("/", oauthRouter);
 
 const MONGO_DB_URL = process.env.MONGO_DB_URL || "mongodb://127.0.0.1:27017";

@@ -2,18 +2,18 @@ const express = require("express");
 const router = express.Router();
 const scheduleService = require("../services/scheduleService");
 
+// 단일 스케줄 조회
+router.get("/:scheduleId", async (req, res) => {
+  const { scheduleId } = req.params;
+  const result = await scheduleService.getSchedule(scheduleId);
+  res.json(result);
+});
+
 // 로그인된 사용자의 모든 스케줄 조회
 router.get("/", async (req, res) => {
   const { email } = req.user;
 
   const result = await scheduleService.getSchedulesByUserEmail(email);
-  res.json(result);
-});
-
-// 단일 스케줄 조회
-router.get("/:scheduleId", async (req, res) => {
-  const { scheduleId } = req.params;
-  const result = await scheduleService.getSchedule(scheduleId);
   res.json(result);
 });
 

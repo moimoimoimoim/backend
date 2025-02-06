@@ -148,7 +148,7 @@ const generateInvite = async (
 
     // 사용자의 스케줄 데이터 생성 (회의 생성 시 스케쥴 DB에 사용자의 `slot` 추가)
     const scheduleData = {
-      scheduleName: `${foundUser._id}의 일정`, // 사용자의 이름을 스케쥴 이름으로 설정
+      scheduleName: `${foundUser.nickname}의 일정`, // 사용자의 이름을 스케쥴 이름으로 설정
       timeslots: [],
       user: foundUser._id,
     };

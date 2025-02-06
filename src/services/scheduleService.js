@@ -23,11 +23,13 @@ async function getSchedulesByUserEmail(email) {
  */
 async function getSchedule(scheduleId) {
   try {
-    const foundSchedule = await Schedule.findById(scheduleId);
+    const foundSchedule = await Schedule.findById(scheduleId).populate(
+      "meeting"
+    );
 
     return { success: true, schedule: foundSchedule };
   } catch (error) {
-    console.error("스케줄 조회회 오류:", error);
+    console.error("스케줄 조회 오류:", error);
     return { success: false, error: error.message };
   }
 }

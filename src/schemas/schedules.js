@@ -11,7 +11,7 @@ const scheduleSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
-  meeting: { type: mongoose.Schema.Types.ObjectId },
+  meeting: { type: mongoose.Schema.Types.ObjectId, ref: "Meeting" },
   scheduleName: { type: String, required: true },
   timeslots: [
     {
