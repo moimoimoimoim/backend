@@ -30,7 +30,6 @@ async function filterTimeSlotsController(req, res) {
     }
 
     const filteredSlots = filterTimeSlots(minDuration, minMembers, timeslots);
-    console.log(filteredSlots);
 
     if (filteredSlots.length === 0) {
       return res

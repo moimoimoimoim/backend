@@ -1,12 +1,12 @@
 //schemas/meeting.js
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const Schedule = require("./schedules");
 
 const meetingSchema = new Schema({
+  owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
   meetingName: { type: String, required: true },
   meetingCode: { type: String, required: false },
-  meetingGroup: { type: Schema.Types.ObjectId, ref: "Group" },
+  meetingGroup: { type: Schema.Types.ObjectId, ref: "Group", required: false },
   meetingTimezone: [
     {
       slot: { type: Number, required: true },
@@ -15,6 +15,7 @@ const meetingSchema = new Schema({
   meetingSchedules: [{ type: Schema.Types.ObjectId, ref: "Schedule" }],
   memberTotal: { type: Number, default: 0 },
   inviteToken: { type: String },
+  isExpired: { type: Boolean, required: true },
   confirmedSchedule: {
     type: {
       start: { type: Number },

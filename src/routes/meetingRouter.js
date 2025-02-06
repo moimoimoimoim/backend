@@ -74,13 +74,13 @@ router.post(
 );
 
 router.post(
-  "/confirm-schedule",
+  "/confirm-schedule/:meetingId",
   authenticateJWT,
   meetingController.confirmScheduleController
 );
 
 router.get(
-  "/confirm-schedule/:inviteToken",
+  "/confirm-schedule/:meetingId",
   meetingController.getConfirmedScheduleController
 );
 

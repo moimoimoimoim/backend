@@ -59,7 +59,7 @@ const generateInviteController = async (req, res) => {
       meetingName,
       meetingCode,
       memberTotal,
-      meetingGroup,
+      meetingGroup ? meetingGroup : undefined,
       meetingTimezone,
       ownerEmail
     );
@@ -83,19 +83,20 @@ const deleteMeetingController = async (req, res) => {
 };
 
 async function confirmScheduleController(req, res) {
-  const { inviteToken, start, end } = req.body;
+  const { start, end } = req.body;
+  const { meetingId } = req.params;
 
   try {
     // Call the service to handle the schedule confirmation
     const confirmedSchedule = await meetingService.confirmSchedule(
-      inviteToken,
+      meetingId,
       start,
       end
     );
 
     return res.status(200).json({
       message: "일정이 확정되었습니다.",
-      confirmed_schedule: confirmedSchedule,
+      confirmedSchedule,
     });
   } catch (error) {
     console.error(error);
@@ -104,16 +105,16 @@ async function confirmScheduleController(req, res) {
 }
 
 const getConfirmedScheduleController = async (req, res) => {
-  const { inviteToken } = req.params;
+  const { meetingId } = req.params;
 
   try {
     const confirmedSchedule = await meetingService.getConfirmedSchedule(
-      inviteToken
+      meetingId
     );
 
     return res.status(200).json({
       message: "확정된 일정 조회 성공",
-      confirmed_schedule: confirmedSchedule,
+      confirmedSchedule,
     });
   } catch (error) {
     console.error(error);

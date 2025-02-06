@@ -160,12 +160,14 @@ const generateInvite = async (
 
     // meeting 생성
     const newMeeting = await Meeting.create({
+      owner: foundUser._id,
       meetingName,
       meetingCode,
       meetingGroup,
       meetingTimezone, // 참여 가능한 시간대 정보
       inviteToken,
       memberTotal,
+      isExpired: false,
       meetingSchedules: [ownerSchedule._id], // 새로 생성한 스케쥴을 회의에 추가
       confirmedSchedule: {},
     });
@@ -281,43 +283,44 @@ async function confirmScheduleController(req, res) {
   }
 }
 
-const confirmSchedule = async (inviteToken, start, end) => {
-  if (!inviteToken || !start) {
+const confirmSchedule = async (meetingId, start, end) => {
+  if (!meetingId || !start) {
     throw new Error("필수 항목이 누락되었습니다.");
   }
 
-  const meeting = await Meeting.findOne({ invite_token: inviteToken });
+  const meeting = await Meeting.findById(meetingId);
 
   if (!meeting) {
     throw new Error("회의를 찾을 수 없습니다.");
   }
 
   // 확정된 일정 저장
-  meeting.confirmed_schedule = { start, end };
+  meeting.confirmedSchedule = { start, end };
   await meeting.save();
 
-  return meeting.confirmed_schedule;
+  return meeting.confirmedSchedule;
 };
 
-const getConfirmedSchedule = async (inviteToken) => {
+const getConfirmedSchedule = async (meetingId) => {
   try {
     // Find the meeting based on the invite token
-    const meeting = await Meeting.findOne({ invite_token: inviteToken });
+    const meeting = await Meeting.findById(meetingId);
 
     if (!meeting) {
       throw new Error("회의를 찾을 수 없습니다.");
     }
 
     // Check if the confirmed schedule exists
-    if (!meeting.confirmed_schedule) {
+    if (!meeting.confirmedSchedule) {
       throw new Error("확정된 일정이 없습니다.");
     }
 
-    return meeting.confirmed_schedule;
+    return meeting.confirmedSchedule;
   } catch (error) {
     throw new Error(error.message);
   }
 };
+
 module.exports = {
   joinMeetingService,
   generateInvite,
