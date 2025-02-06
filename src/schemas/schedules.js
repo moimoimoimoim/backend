@@ -2,11 +2,16 @@
 const mongoose = require("mongoose");
 
 const scheduleSchema = new mongoose.Schema({
-  userId: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: false,
   }, // required: false로 변경
+  nonMemberUser: {
+    type: String,
+    required: false,
+  },
+  meeting: { type: mongoose.Schema.Types.ObjectId },
   scheduleName: { type: String, required: true },
   timeslots: [
     {

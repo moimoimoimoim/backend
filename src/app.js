@@ -5,6 +5,7 @@ const meetingRouter = require("./routes/meetingRouter");
 const usersRouter = require("./routes/usersRouter");
 const oauthRouter = require("./routes/oauthRouter");
 const scheduleRouter = require("./routes/scheduleRouter");
+const groupRouter = require("./routes/groupRouter");
 const loginRequired = require("./utils/login-required");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/", meetingRouter);
 app.use("/users", usersRouter);
+app.use("/groups", authenticateJWT, groupRouter);
 app.use("/schedules", authenticateJWT, scheduleRouter);
 app.use("/", oauthRouter);
 

@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 const Meeting = require("../schemas/meeting");
 const Schedule = require("../schemas/schedules");
+const Group = require("../schemas/groups");
 const crypto = require("crypto");
+const User = require("../schemas/users");
 
 // timeslots 업데이트 함수
 function updateTimeslots(nickname, respondedSlots) {
@@ -62,25 +64,22 @@ function filterTimeSlots(minDuration, minMembers) {
   return resultSlots;
 }
 
-console.log("최소 인원 2명:", filterTimeSlots(0, 2));
-console.log("최소 시간 60분:", filterTimeSlots(60, 0));
-console.log("최소 인원 2명 & 최소 시간 60분:", filterTimeSlots(60, 2));
-
 // 초대 토큰 생성
-const generateInviteToken = async () => {
-  let inviteToken;
-  let existingMeeting;
+const generateInviteToken = () => {
+  // let inviteToken;
+  // let existingMeeting;
 
-  do {
-    inviteToken = crypto.randomBytes(20).toString("hex");
-    existingMeeting = await Meeting.findOne({ invite_token: inviteToken });
+  // do {
+  //   inviteToken = crypto.randomBytes(20).toString("hex");
+  //   existingMeeting = await Meeting.findOne({ inviteToken });
 
-    if (!inviteToken) {
-      throw new Error("inviteToken이 null입니다. 다시 생성해 주세요.");
-    }
-  } while (existingMeeting);
+  //   if (!inviteToken) {
+  //     throw new Error("inviteToken이 null입니다. 다시 생성해 주세요.");
+  //   }
+  // } while (existingMeeting);
 
-  return inviteToken; // 여기에서 await을 기다리고 반환
+  // return inviteToken; // 여기에서 await을 기다리고 반환
+  return crypto.randomBytes(20).toString("hex");
 };
 
 // 회의 참여하기
@@ -98,7 +97,7 @@ const joinMeetingService = async (
     throw new Error("유효하지 않은 초대 링크입니다.");
   }
 
-  if (participantCode !== meeting.meeting_code) {
+  if (participantCode !== meeting.meetingCode) {
     throw new Error("참여 코드가 일치하지 않습니다.");
   }
 
@@ -128,53 +127,58 @@ const joinMeetingService = async (
 
 // 회의 초대 링크 생성
 const generateInvite = async (
-  meeting_name,
-  meeting_code,
-  timeslots,
-  meetingRole = "HOST",
+  meetingName,
+  meetingCode,
+  memberTotal,
   meetingGroup,
-  user_id
+  meetingTimezone,
+  ownerEmail
 ) => {
-  if (!timeslots || timeslots.length === 0) {
-    throw new Error("회의시간(slot)이 필수입니다.");
-  }
-
-  // 초대 토큰 생성
-  const invite_token = await generateInviteToken(); // 초대 토큰 생성 시 await 추가
-  const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000); // 예시로 24시간 후 만료 설정
-
-  // 사용자의 스케줄 데이터 생성 (회의 생성 시 스케쥴 DB에 사용자의 `slot` 추가)
-  const scheduleData = {
-    scheduleName: `${user_id}'s Schedule`, // 사용자의 이름을 스케쥴 이름으로 설정
-    timeslots: timeslots.map((slot) => ({ slot })), // 선택한 시간대
-  };
-
-  if (user_id) {
-    scheduleData.userId = user_id;
-  }
-
-  const schedule = new Schedule(scheduleData); // 새로운 스케쥴 생성
-  await schedule.save(); // 스케쥴 DB에 저장
-
-  // meeting 생성
-  const newMeeting = new Meeting({
-    meeting_name,
-    meeting_code,
-    timeslots: timeslots.map((slot) => ({ slot })), // 참여 가능한 시간대 정보
-    meeting_role: meetingRole,
-    meeting_group: meetingGroup,
-    invite_token,
-    expires_at,
-    meeting_schedule: [schedule._id], // 새로 생성한 스케쥴을 회의에 추가
-    member_total: 1, // 처음에 1명 (주최자)
-    confirmed_schedule: {},
-  });
-
   try {
-    await newMeeting.save(); // 회의 DB에 저장
+    if (!meetingTimezone || meetingTimezone.length === 0) {
+      throw new Error("회의시간(slot)이 필수입니다.");
+    }
+
+    const foundUser = await User.findOne({ email: ownerEmail });
+    if (!foundUser) throw new Error("로그인은 필수입니다.");
+
+    // 초대 토큰 생성
+    const inviteToken = generateInviteToken(); // 초대 토큰 생성 시 await 추가
+    // const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000); // 예시로 24시간 후 만료 설정
+
+    // 사용자의 스케줄 데이터 생성 (회의 생성 시 스케쥴 DB에 사용자의 `slot` 추가)
+    const scheduleData = {
+      scheduleName: `${foundUser._id}의 일정`, // 사용자의 이름을 스케쥴 이름으로 설정
+      timeslots: [],
+      user: foundUser._id,
+    };
+    const ownerSchedule = await Schedule.create(scheduleData); // 새로운 스케쥴 생성
+
+    // meeting 생성
+    const newMeeting = await Meeting.create({
+      meetingName,
+      meetingCode,
+      meetingTimezone, // 참여 가능한 시간대 정보
+      inviteToken,
+      memberTotal,
+      meetingSchedules: [ownerSchedule._id], // 새로 생성한 스케쥴을 회의에 추가
+      confirmedSchedule: {},
+    });
+
+    ownerSchedule.meeting = newMeeting._id;
+    await ownerSchedule.save();
+
+    if (meetingGroup) {
+      const foundGroup = await Group.findById(meetingGroup);
+      foundGroup.meetings = [newMeeting._id, ...foundGroup.meetings];
+      await foundGroup.save();
+    }
+
     return {
       message: "회의 초대 링크 생성 완료",
-      invite_link: `/join/${invite_token}`,
+      inviteLink: `/join/${inviteToken}`,
+      ownerSchedule,
+      meeting: newMeeting,
     }; // 초대 링크 반환
   } catch (err) {
     console.error("회의 생성 오류: ", err);

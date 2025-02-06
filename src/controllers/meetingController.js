@@ -43,28 +43,28 @@ const getMeetingSchedulesController = async (req, res) => {
 const generateInviteController = async (req, res) => {
   try {
     const {
-      meeting_name,
-      meeting_code,
-      timeslots,
-      meetingRole,
+      meetingName,
+      meetingCode,
+      meetingTimezone,
+      memberTotal,
       meetingGroup,
-      user_id,
     } = req.body;
+    const { email: ownerEmail } = req.user;
 
-    if (!timeslots || timeslots.length === 0) {
+    if (!meetingTimezone || meetingTimezone.length === 0) {
       return res.status(400).json({ error: "회의시간(slot)이 필수입니다." });
     }
 
-    const meeting = await meetingService.generateInvite(
-      meeting_name,
-      meeting_code,
-      timeslots,
-      meetingRole,
+    const result = await meetingService.generateInvite(
+      meetingName,
+      meetingCode,
+      memberTotal,
       meetingGroup,
-      user_id
+      meetingTimezone,
+      ownerEmail
     );
 
-    return res.status(201).json({ message: "회의 초대 생성 성공", meeting });
+    return res.status(201).json(result);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
