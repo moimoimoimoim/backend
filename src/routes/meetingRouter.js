@@ -7,6 +7,7 @@ const slotController = require("../controllers/slotController");
 const User = require("../schemas/users");
 const Schedule = require("../schemas/schedules");
 const { authenticateJWT } = require("../middlewares/authMiddleware");
+const Meeting = require("../schemas/meeting");
 
 router.get("/", authenticateJWT, async (req, res) => {
   try {
@@ -17,9 +18,14 @@ router.get("/", authenticateJWT, async (req, res) => {
 
     const schedules = await Schedule.find({}).populate({
       path: "meeting",
-      populate: {
-        path: "meetingGroup",
-      },
+      populate: [
+        {
+          path: "meetingGroup",
+        },
+        {
+          path: "meetingSchedules",
+        },
+      ],
     });
     const filteredSchedules = schedules.filter(
       (schedule) => schedule.user && schedule.user._id.equals(foundUser._id)
@@ -40,6 +46,44 @@ router.post(
   meetingController.generateInviteController
 );
 router.post("/join/:inviteToken", joinController.joinController);
+
+router.put("/expire/:meetingId", authenticateJWT, async (req, res) => {
+  try {
+    const { meetingId } = req.params;
+
+    const foundMeeting = await Meeting.findById(meetingId);
+    if (!foundMeeting)
+      return res
+        .status(404)
+        .json({ success: false, message: "Meeting not found" });
+
+    foundMeeting.isExpired = true;
+    await foundMeeting.save();
+
+    return res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+  }
+});
+
+router.put("/activate/:meetingId", authenticateJWT, async (req, res) => {
+  try {
+    const { meetingId } = req.params;
+
+    const foundMeeting = await Meeting.findById(meetingId);
+    if (!foundMeeting)
+      return res
+        .status(404)
+        .json({ success: false, message: "Meeting not found" });
+
+    foundMeeting.isExpired = false;
+    await foundMeeting.save();
+
+    return res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+  }
+});
 
 router.get(
   "/join/:inviteToken",
